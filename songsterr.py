@@ -8,8 +8,21 @@ VALID_SONG_URL = r'/http:\/\/www.songsterr.com\/a\/wsa\/.+s\d+t\d+/i'
 REVISION_ID = r'\d+(?=&demoSong)'
 
 
+def shorten(song_data):
+    output = {}
+    output['artist'] = {}
+    output['artist']['id'] = song_data['song']['artist']['id']
+    output['artist']['name'] = song_data['song']['artist']['name']
+    output['title'] = song_data['song']['title']
+    output['gp5'] = song_data['tab']['guitarProTab']['attachmentUrl']
+    output['songId'] = song_data['song']['id']
+    output['tabId'] = song_data['tab']['id']
+    return output
+    
+
 class SongSterr(object):
-    def __init__(self, encoding="json"):
+    def __init__(self, encoding="json", summarize=True):
+        self.summarize = summarize
         self.encoding = encoding
 
     def _url(self, path):
@@ -45,14 +58,9 @@ class SongSterr(object):
         resp = requests.get(self._revision_url(revision_id))
         if resp.status_code == 200:
             resp_json = resp.json()
-            output = {}
-            output['artist'] = {}
-            output['artist']['id'] = resp_json['song']['artist']['id']
-            output['artist']['name'] = resp_json['song']['artist']['name']
-            output['title'] = resp_json['song']['title']
-            output['gp5'] = resp_json['tab']['guitarProTab']['attachmentUrl']
-            output['songId'] = resp_json['song']['id']
-            output['tabId'] = resp_json['tab']['id']
-            return output
+            if self.summarize:
+                return shorten(resp_json)
+            else:
+                return resp_json
         else:
             resp.raise_for_status()
